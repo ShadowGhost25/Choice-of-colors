@@ -11,11 +11,15 @@ document.addEventListener('keydown', (event) => {
 document.addEventListener('click', event => {
     const type = event.target.dataset.type
     if (type === 'lock') {
-        const node = event.target.tagName.toLowerCase() === 'i'
+        const node = 
+        event.target.tagName.toLowerCase() === 'i'
         ? event.target
         : event.target.children[0]
+
         node.classList.toggle('fa-lock')
         node.classList.toggle('fa-lock-open')
+    } else if (type == 'copy'){
+        coppyToCockboard(event.target.textContent)
     }
 })
 
@@ -27,27 +31,58 @@ function gereneraterRandomColor() {
     }
     return '#' + color
 }
-
-function setRandomColors() {    
-    cols.forEach((col) => {
+ function coppyToCockboard (text) {
+   return navigator.clipboard.writeText (text)
+ }
+function setRandomColors(isInitial) {    
+    const colors = isInitial ? getColorsFromHash() : []
+    cols.forEach((col, index) => {
         const isLocked = col.querySelector('i').classList.contains('fa-lock')
         const text = col.querySelector('h2')
         const button = col.querySelector('button')
-        const color = chroma.random()
+        
         if (isLocked) {
+            colors.push(text.textContent)
             return
         }
+        
+        const color = isInitial 
+        ? colors[index]
+            ? colors[index]
+            : chroma.random()
+        : chroma.random()
+        if(!isInitial){
+            colors.push(color)
+        }
+        
 
         text.textContent = color
-        col.style.background = gereneraterRandomColor()
+        col.style.background = color
 
         setTextColor(text, color)
         setTextColor(button, color)
     })
+    updateColorsHash(colors)
 }
 
 function setTextColor (text, color) {
     const luminance = chroma(color).luminance()
     text.style.color = luminance > 0.5 ? 'black' : 'white'
 }
-setRandomColors()
+
+function updateColorsHash (colors = []) {
+    document.location.hash = colors.map((col) => { 
+        return col.toString().substring(1)
+    }).join('-')
+}
+
+function getColorsFromHash() {
+    if (document.location.hash.length > 1) {
+        return document.location.hash
+        .substring(1)
+        .split('-')
+        .map((color) => '#' + color)
+    }
+    return []
+}
+setRandomColors(true)
